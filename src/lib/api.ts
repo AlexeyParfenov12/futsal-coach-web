@@ -1,5 +1,5 @@
 import { demoData } from '../data/demo';
-import type { AppData, PhysicalTestPayload } from '../types';
+import type { AppData, NewPlayerPayload, PhysicalTestPayload } from '../types';
 
 declare global {
   interface Window {
@@ -42,6 +42,46 @@ export async function savePhysicalTest(payload: PhysicalTestPayload) {
     return { ok: true, demo: true };
   }
   const result = await gasCall<{ ok: boolean; row: number; batteryId: string; appData?: AppData }>('savePhysicalTest', payload);
+  if (result.appData) {
+    window.dispatchEvent(new CustomEvent<AppData>('futsal-data-refresh', { detail: result.appData }));
+  }
+  return result;
+}
+
+
+export async function savePlayer(payload: NewPlayerPayload) {
+  if (!hasGas()) {
+    const maxNumber = demoData.players.reduce((max, player) => {
+      const match = player.id.match(/^P(\d+)$/);
+      return match ? Math.max(max, Number(match[1])) : max;
+    }, 0);
+    const playerId = 'P' + String(maxNumber + 1).padStart(3, '0');
+    const birth = new Date(payload.birthDate + 'T12:00:00');
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const monthDiff = now.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--;
+
+    const appData: AppData = {
+      ...demoData,
+      players: [
+        ...demoData.players,
+        {
+          id: playerId,
+          name: payload.name,
+          position: payload.position,
+          secondaryPosition: payload.secondaryPosition || undefined,
+          status: 'Активен',
+          age,
+          group: payload.group || 'Футзал'
+        }
+      ]
+    };
+    window.dispatchEvent(new CustomEvent<AppData>('futsal-data-refresh', { detail: appData }));
+    return { ok: true, playerId, appData };
+  }
+
+  const result = await gasCall<{ ok: boolean; playerId: string; row: number; appData?: AppData }>('savePlayer', payload);
   if (result.appData) {
     window.dispatchEvent(new CustomEvent<AppData>('futsal-data-refresh', { detail: result.appData }));
   }

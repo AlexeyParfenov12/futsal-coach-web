@@ -19,6 +19,7 @@ export default function PlayersPage() {
           <h1>Игроки</h1>
           <p>Карточки игроков и все накопленные показатели.</p>
         </div>
+        <Link className="primary-button" to="/players/new"><UserPlus size={18}/> Добавить игрока</Link>
       </header>
 
       {data.players.length > 0 && (
@@ -34,7 +35,8 @@ export default function PlayersPage() {
         <section className="panel empty-state">
           <div className="empty-icon"><UserPlus size={26}/></div>
           <h2>Игроков пока нет</h2>
-          <p>Сайт подключён к реальной Futsal Coach System. Когда в системе появятся игроки, их карточки автоматически появятся здесь.</p>
+          <p>Сайт подключён к реальной Futsal Coach System. Добавь первого игрока прямо здесь — таблицу открывать не нужно.</p>
+          <Link className="primary-button empty-action" to="/players/new"><UserPlus size={18}/> Добавить первого игрока</Link>
         </section>
       ) : players.length === 0 ? (
         <section className="panel empty-state">

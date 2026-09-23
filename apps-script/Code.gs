@@ -88,6 +88,79 @@ function getAppData() {
   };
 }
 
+function savePlayer(payload) {
+  if (!payload || !payload.name || !payload.sex || !payload.birthDate || !payload.position) {
+    throw new Error('Заполни ФИО, пол, дату рождения и основную позицию');
+  }
+
+  const allowedSex = ['м', 'ж'];
+  const allowedPositions = ['GK', 'Cierre', 'Ala', 'Pivot', 'Универсал'];
+
+  if (allowedSex.indexOf(payload.sex) === -1) {
+    throw new Error('Некорректный пол');
+  }
+  if (allowedPositions.indexOf(payload.position) === -1) {
+    throw new Error('Некорректная основная позиция');
+  }
+  if (payload.secondaryPosition && allowedPositions.indexOf(payload.secondaryPosition) === -1) {
+    throw new Error('Некорректная дополнительная позиция');
+  }
+
+  const sheet = getSpreadsheet_().getSheetByName(SHEETS.players);
+  if (!sheet) throw new Error('Лист "Игроки" не найден');
+
+  const row = Math.max(2, findFirstEmptyRow_(sheet, 1));
+  const playerId = nextPlayerId_(sheet);
+  const birthDate = new Date(payload.birthDate + 'T12:00:00');
+  if (isNaN(birthDate.getTime())) throw new Error('Некорректная дата рождения');
+
+  const values = [[
+    playerId,
+    String(payload.name).trim(),
+    payload.sex,
+    birthDate,
+    '',
+    payload.group || '',
+    payload.position,
+    payload.secondaryPosition || '',
+    '',
+    payload.position === 'GK' ? 'Да' : 'Нет',
+    payload.email || '',
+    'Активен',
+    new Date(),
+    payload.comment || '',
+    '',
+    'Нет'
+  ]];
+
+  sheet.getRange(row, 1, 1, 16).setValues(values);
+  sheet.getRange(row, 5).setFormula('=IF(D' + row + '="","",DATEDIF(D' + row + ',TODAY(),"Y"))');
+  sheet.getRange(row, 4).setNumberFormat('dd.mm.yyyy');
+  sheet.getRange(row, 13).setNumberFormat('dd.mm.yyyy');
+
+  SpreadsheetApp.flush();
+
+  return {
+    ok: true,
+    row: row,
+    playerId: playerId,
+    appData: getAppData()
+  };
+}
+
+function nextPlayerId_(sheet) {
+  const lastRow = Math.max(sheet.getLastRow(), 2);
+  const values = sheet.getRange(2, 1, lastRow - 1, 1).getDisplayValues();
+  let maxNumber = 0;
+
+  values.forEach(function(row) {
+    const match = String(row[0] || '').match(/^P(\d+)$/i);
+    if (match) maxNumber = Math.max(maxNumber, Number(match[1]));
+  });
+
+  return 'P' + String(maxNumber + 1).padStart(3, '0');
+}
+
 function savePhysicalTest(payload) {
   if (!payload || !payload.playerId || !payload.code) {
     throw new Error('Не хватает PlayerID или кода теста');

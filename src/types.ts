@@ -48,3 +48,15 @@ export type PhysicalTestPayload = {
   batteryId?: string;
   testType?: 'Контрольное' | 'Мониторинг';
 };
+
+
+export type NewPlayerPayload = {
+  name: string;
+  sex: 'м' | 'ж';
+  birthDate: string;
+  group?: string;
+  position: 'GK' | 'Cierre' | 'Ala' | 'Pivot' | 'Универсал';
+  secondaryPosition?: '' | 'GK' | 'Cierre' | 'Ala' | 'Pivot' | 'Универсал';
+  email?: string;
+  comment?: string;
+};

@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import DashboardPage from './pages/DashboardPage';
 import PlayersPage from './pages/PlayersPage';
+import AddPlayerPage from './pages/AddPlayerPage';
 import PlayerPage from './pages/PlayerPage';
 import TestingPage from './pages/TestingPage';
 import PlaceholderPage from './pages/PlaceholderPage';
@@ -40,6 +41,7 @@ export default function App() {
       <Route element={<Layout data={data}/>}>
         <Route index element={<DashboardPage/>}/>
         <Route path="players" element={<PlayersPage/>}/>
+        <Route path="players/new" element={<AddPlayerPage/>}/>
         <Route path="players/:id" element={<PlayerPage/>}/>
         <Route path="testing" element={<TestingPage/>}/>
         <Route path="trainings" element={<PlaceholderPage title="Тренировки" text="Планирование, текущая тренировка, посещаемость и RPE."/>}/>
