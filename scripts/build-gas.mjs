@@ -15,13 +15,12 @@ if (scriptMatch) {
   );
   const js = fs.readFileSync(jsPath, 'utf8');
 
-  // Vite places the module script in <head>. A module is deferred by default,
-  // but an inline classic script would execute immediately before #root exists.
-  // Remove it from <head> and inject it at the end of <body> instead.
+  // Vite puts its module script in <head>. When we turn it into a classic
+  // inline script for Apps Script it must run after #root has been parsed.
   html = html.replace(scriptMatch[0], () => '');
 
-  // Prevent a literal </script> sequence inside bundled JavaScript from
-  // terminating the inline script element early.
+  // Escape only closing-script sequences that are part of bundled JS text.
+  // The wrapper tag we generate below must remain a real </script> HTML tag.
   appScript = js.replace(/<\/script/gi, '<\\/script');
 }
 
@@ -59,10 +58,10 @@ const diagnostics = `<script>
     showError(event.reason && (event.reason.stack || event.reason.message || event.reason));
   });
 })();
-<\/script>`;
+</script>`;
 
 if (appScript) {
-  const inlineApp = '<script>' + appScript + '<\/script>';
+  const inlineApp = '<script>' + appScript + '</script>';
   const payload = diagnostics + inlineApp;
 
   if (/<\/body>/i.test(html)) {
@@ -72,6 +71,23 @@ if (appScript) {
   }
 }
 
+// Build-time safety checks: Apps Script should never receive malformed HTML.
+const openScripts = (html.match(/<script(?:\s|>)/gi) || []).length;
+const closeScripts = (html.match(/<\/script>/gi) || []).length;
+if (openScripts !== closeScripts) {
+  throw new Error(
+    'Generated HTML has unbalanced script tags: ' +
+    openScripts + ' opening vs ' + closeScripts + ' closing'
+  );
+}
+
+const rootPosition = html.indexOf('id="root"');
+const appPosition = html.lastIndexOf('<script>');
+if (rootPosition === -1 || appPosition === -1 || appPosition < rootPosition) {
+  throw new Error('Generated app script is not located after #root');
+}
+
 fs.mkdirSync(path.dirname(target), { recursive: true });
 fs.writeFileSync(target, html);
 console.log('Generated ' + target);
+console.log('Verified script tags: ' + openScripts + '/' + closeScripts);
