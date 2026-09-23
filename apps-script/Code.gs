@@ -1,3 +1,5 @@
+const SPREADSHEET_ID = '1csgLOz1ihumjqb_RfFGtrM2R1pZPbm7cYIMoSR5nvXc';
+
 const SHEETS = {
   players: 'Игроки',
   rating: 'Рейтинг',
@@ -11,16 +13,8 @@ function doGet() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function setupSpreadsheet(spreadsheetId) {
-  if (!spreadsheetId) throw new Error('Передай spreadsheetId');
-  PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', spreadsheetId);
-  return { ok: true };
-}
-
 function getSpreadsheet_() {
-  const id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-  if (!id) throw new Error('SPREADSHEET_ID не настроен. Один раз запусти setupSpreadsheet("ID").');
-  return SpreadsheetApp.openById(id);
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
 
 function getValues_(sheetName) {
@@ -87,13 +81,22 @@ function getAppData() {
     };
   });
 
-  return { players: players, physicalProfiles: physicalProfiles, source: 'google-sheets' };
+  return {
+    players: players,
+    physicalProfiles: physicalProfiles,
+    source: 'google-sheets'
+  };
 }
 
 function savePhysicalTest(payload) {
-  if (!payload || !payload.playerId || !payload.code) throw new Error('Не хватает PlayerID или кода теста');
+  if (!payload || !payload.playerId || !payload.code) {
+    throw new Error('Не хватает PlayerID или кода теста');
+  }
+
   const allowed = ['F1','F2','F3-R','F3-L','F4','F5','F6'];
-  if (allowed.indexOf(payload.code) === -1) throw new Error('Неизвестный тест: ' + payload.code);
+  if (allowed.indexOf(payload.code) === -1) {
+    throw new Error('Неизвестный тест: ' + payload.code);
+  }
 
   const sheet = getSpreadsheet_().getSheetByName(SHEETS.physical);
   if (!sheet) throw new Error('Лист "Физические тесты" не найден');
@@ -104,7 +107,9 @@ function savePhysicalTest(payload) {
   }
 
   const expected = payload.code === 'F4' ? 6 : payload.code === 'F5' ? 1 : 3;
-  if (attempts.length !== expected) throw new Error('Для ' + payload.code + ' нужно попыток: ' + expected);
+  if (attempts.length !== expected) {
+    throw new Error('Для ' + payload.code + ' нужно попыток: ' + expected);
+  }
 
   const row = Math.max(2, findFirstEmptyRow_(sheet, 2));
   const batteryId = payload.batteryId || makeBatteryId_();
@@ -122,17 +127,27 @@ function savePhysicalTest(payload) {
   }
 
   sheet.getRange(row, 21).setValue(payload.method || 'Другое');
-  if (payload.comment) sheet.getRange(row, 25).setValue(payload.comment);
+
+  if (payload.comment) {
+    sheet.getRange(row, 25).setValue(payload.comment);
+  }
 
   if (payload.code === 'F4' && payload.rsa5m && payload.rsa5m.length) {
-    const splits = payload.rsa5m.map(function(v) { return v === '' ? '' : Number(v); });
+    const splits = payload.rsa5m.map(function(v) {
+      return v === '' ? '' : Number(v);
+    });
     const padded = splits.slice(0, 6);
     while (padded.length < 6) padded.push('');
     sheet.getRange(row, 31, 1, 6).setValues([padded]);
   }
 
   SpreadsheetApp.flush();
-  return { ok: true, row: row, batteryId: batteryId };
+
+  return {
+    ok: true,
+    row: row,
+    batteryId: batteryId
+  };
 }
 
 function findFirstEmptyRow_(sheet, keyColumn) {
