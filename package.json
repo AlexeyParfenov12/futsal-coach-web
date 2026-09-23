@@ -5,21 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc && vite build",
+    "build:gas": "npm run build && node scripts/build-gas.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^5.0.2",
-    "vite": "^7.1.7",
-    "typescript": "~5.9.2",
+    "lucide-react": "^0.544.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1",
-    "lucide-react": "^0.544.0",
     "recharts": "^3.2.1"
   },
   "devDependencies": {
     "@types/react": "^19.1.16",
-    "@types/react-dom": "^19.1.9"
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.7"
   }
 }
