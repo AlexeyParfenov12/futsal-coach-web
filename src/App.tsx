@@ -17,6 +17,14 @@ export default function App() {
     loadAppData()
       .then(setData)
       .catch((e) => setError(e instanceof Error ? e.message : 'Ошибка загрузки'));
+
+    const handleRefresh = (event: Event) => {
+      const customEvent = event as CustomEvent<AppData>;
+      if (customEvent.detail) setData(customEvent.detail);
+    };
+
+    window.addEventListener('futsal-data-refresh', handleRefresh);
+    return () => window.removeEventListener('futsal-data-refresh', handleRefresh);
   }, []);
 
   if (error) {

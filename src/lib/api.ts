@@ -41,5 +41,9 @@ export async function savePhysicalTest(payload: PhysicalTestPayload) {
     await new Promise((resolve) => setTimeout(resolve, 350));
     return { ok: true, demo: true };
   }
-  return gasCall<{ ok: boolean; row: number; batteryId: string }>('savePhysicalTest', payload);
+  const result = await gasCall<{ ok: boolean; row: number; batteryId: string; appData?: AppData }>('savePhysicalTest', payload);
+  if (result.appData) {
+    window.dispatchEvent(new CustomEvent<AppData>('futsal-data-refresh', { detail: result.appData }));
+  }
+  return result;
 }

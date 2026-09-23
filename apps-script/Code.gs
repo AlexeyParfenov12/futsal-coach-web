@@ -146,7 +146,8 @@ function savePhysicalTest(payload) {
   return {
     ok: true,
     row: row,
-    batteryId: batteryId
+    batteryId: batteryId,
+    appData: getAppData()
   };
 }
 
