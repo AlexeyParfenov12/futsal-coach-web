@@ -71,23 +71,30 @@ if (appScript) {
   }
 }
 
-// Build-time safety checks: Apps Script should never receive malformed HTML.
-const openScripts = (html.match(/<script(?:\s|>)/gi) || []).length;
+// Build-time safety checks. Do not count opening "<script" text globally:
+ // bundled libraries may legitimately contain that text inside JavaScript strings.
 const closeScripts = (html.match(/<\/script>/gi) || []).length;
-if (openScripts !== closeScripts) {
-  throw new Error(
-    'Generated HTML has unbalanced script tags: ' +
-    openScripts + ' opening vs ' + closeScripts + ' closing'
-  );
+if (closeScripts < 2) {
+  throw new Error('Generated HTML is missing real closing </script> tags');
 }
 
 const rootPosition = html.indexOf('id="root"');
-const appPosition = html.lastIndexOf('<script>');
-if (rootPosition === -1 || appPosition === -1 || appPosition < rootPosition) {
-  throw new Error('Generated app script is not located after #root');
+const diagnosticsPosition = html.indexOf('<script>\n(function () {');
+const finalClosePosition = html.lastIndexOf('</script>');
+const bodyClosePosition = html.lastIndexOf('</body>');
+
+if (
+  rootPosition === -1 ||
+  diagnosticsPosition === -1 ||
+  diagnosticsPosition < rootPosition ||
+  finalClosePosition === -1 ||
+  bodyClosePosition === -1 ||
+  finalClosePosition > bodyClosePosition
+) {
+  throw new Error('Generated Apps Script HTML structure is invalid');
 }
 
 fs.mkdirSync(path.dirname(target), { recursive: true });
 fs.writeFileSync(target, html);
 console.log('Generated ' + target);
-console.log('Verified script tags: ' + openScripts + '/' + closeScripts);
+console.log('Verified Apps Script HTML structure');
